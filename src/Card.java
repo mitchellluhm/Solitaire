@@ -113,7 +113,7 @@ public class Card {
         return xpos;
     }
 
-    public void setXpos(int xxos) {
+    public void setXpos(int xpos) {
         this.xpos = xpos;
     }
 
