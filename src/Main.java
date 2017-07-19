@@ -20,6 +20,7 @@ public class Main {
     private ListenForSecondMouse lForMouse2;
     private int[] firstCardLocations;
     private Card firstCard, secondCard;
+    //private Card[] secondMouseEnabledCards = new Card[7];
 
     public static void main(String[] args) {
         Main m = new Main();
@@ -134,6 +135,8 @@ public class Main {
     public void removeCards(Card[] cs) {
         for (Card c : cs) {
             panel.remove(cardPanelLocations[c.getXpos()][c.getYpos()]);
+            cardPanelLocations[c.getXpos()][c.getYpos()] = null;
+
         }
         panel.revalidate();
         panel.repaint();
@@ -146,23 +149,43 @@ public class Main {
         int y = firstOld.getYpos() + newStack.length;
         gridConstraints.gridx = x;
 
-        firstCardLocations[x] = y;
-        firstCardLocations[oldStack[0].getXpos()] = oldStack[oldStack.length - 1].getYpos() - oldStack.length;
+        firstCardLocations[x] = newStack.length + oldStack.length - 1;
+        firstCardLocations[newStack[0].getXpos()] -= newStack.length;
         removeCards(oldStack);
         removeCards(newStack);
 
         for (int i = newStack.length - 1; i >= 0; i--) {
             gridConstraints.gridy = y;
-            panel.add(newStack[i].getCardImg(), gridConstraints);
+            newStack[i].setXpos(x);
+            newStack[i].setYpos(y);
+            cardPanelLocations[x][y] = newStack[i].getCardImg();
+            panel.add(cardPanelLocations[x][y], gridConstraints);
             y--;
         }
         for (int j = oldStack.length - 1; j >= 0; j--) {
             gridConstraints.gridy = y;
-            panel.add(oldStack[j].getCardImg(), gridConstraints);
+            cardPanelLocations[x][y] = oldStack[j].getCardImg();
+            panel.add(cardPanelLocations[x][y], gridConstraints);
             y--;
         }
         panel.revalidate();
         panel.repaint();
+    }
+
+    public void resetMouseListeners(JPanel[][] cPanels) {
+        for (int i = 0; i < cPanels.length; i++) {
+            for (int j = 0; j < cPanels[0].length; j++) {
+                if (cPanels[i][j] != null) {
+                    MouseListener[] mListeners = cPanels[i][j].getMouseListeners();
+                    for (int k = 0; k < mListeners.length; k++) {
+                        cPanels[i][j].removeMouseListener(mListeners[k]);
+                    }
+                    ListenForFirstMouse lForMouse1 = new ListenForFirstMouse();
+                    cPanels[i][j].addMouseListener(lForMouse1);
+                }
+
+            }
+        }
     }
 
     private class ListenForFirstMouse implements MouseListener {
@@ -230,28 +253,18 @@ public class Main {
             String suit2 = secondCard.getType();
             int val1 = firstCard.getValue();
             int val2 = secondCard.getValue();
-            if (suit1.equals(suit2) && (val1 + 1) == val2) {
+            if (suit1.equals(suit2) && (val1 + 1) == val2 && firstCard.getXpos() != secondCard.getXpos()) {
                 System.out.println("LEGAL");
                 // 1) find cards underneath firstCard
                 //Card[] cardStack = getCardStack(firstCard);
                 // 2) move stack over below secondCard
                 moveCards(getCardStack(firstCard), getCardStack(getCardAt(secondCard.getXpos(), 0)));
-//                int newSpotX = secondCard.getXpos();
-//                int newSpotY = secondCard.getYpos() + 1;
-//                panel.remove(cardPanelLocations[firstCard.getXpos()][firstCard.getYpos()]);
-//                firstCard.setXpos(newSpotX);
-//                firstCard.setYpos(newSpotY);
-//                cardPanelLocations[firstCard.getXpos()][firstCard.getYpos()] = firstCard.getCardImg();
-//                gridConstraints.gridx = firstCard.getXpos();
-//                gridConstraints.gridy = firstCard.getYpos();
-//                panel.add(cardPanelLocations[firstCard.getXpos()][firstCard.getYpos()], gridConstraints);
-//                frame.revalidate();
-//                frame.repaint();
-
             }
             else {
                 System.out.println("ILLEGAL");
             }
+            resetMouseListeners(cardPanelLocations);
+
 
 
         }

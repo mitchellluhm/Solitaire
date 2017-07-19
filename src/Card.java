@@ -40,43 +40,43 @@ public class Card {
         int val;
         switch(s) {
             case "ace":
-                val = 12;
+                val = 0;
                 break;
             case "king":
-                val = 11;
+                val = 12;
                 break;
             case "queen":
-                val = 10;
+                val = 11;
                 break;
             case "jack":
-                val = 9;
+                val = 10;
                 break;
             case "10":
-                val = 8;
+                val = 9;
                 break;
             case "9":
-                val = 7;
+                val = 8;
                 break;
             case "8":
-                val = 6;
+                val = 7;
                 break;
             case "7":
-                val = 5;
+                val = 6;
                 break;
             case "6":
-                val = 4;
+                val = 5;
                 break;
             case "5":
-                val = 3;
+                val = 4;
                 break;
             case "4":
-                val = 2;
+                val = 3;
                 break;
             case "3":
-                val = 1;
+                val = 2;
                 break;
             case "2":
-                val = 0;
+                val = 1;
                 break;
             default:
                 val = -1; // error
