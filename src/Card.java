@@ -21,7 +21,7 @@ public class Card {
         this.setYpos(-1);
 
         ShowPNG img = new ShowPNG();
-        System.out.println(s);
+        //System.out.println(s);
         this.setCardImg(img.getCard(s));
     }
 

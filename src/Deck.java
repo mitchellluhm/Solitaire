@@ -64,12 +64,5 @@ public class Deck {
         return false;
     }
 
-    public static void main(String[] args) {
-        Deck d = new Deck();
-        d.makeDeck();
-        d.shuffleDeck();
-        for (int i = 0; i < 52; i++)
-            System.out.println(d.getCardDeck()[i].getValue() + " " + d.getCardDeck()[i].getType());
-        //System.out.println(d.getCardDeck()[51].getValue());
-    }
+
 }

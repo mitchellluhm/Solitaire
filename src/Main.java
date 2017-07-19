@@ -102,7 +102,67 @@ public class Main {
                 gridConstraints.gridy--;
             }
         }
+    }
 
+    public Card getCardAt(int x, int y) {
+        for (Card c : cards) {
+            if (c.getXpos() == x && c.getYpos() == y) {
+                return c;
+            }
+        }
+        System.out.println("ERROR");
+        return null;
+    }
+
+    // return array of card c and all cards "below" (v) it
+    public Card[] getCardStack(Card c) {
+        Card[] stack = new Card[firstCardLocations[c.getXpos()] - c.getYpos() + 1];
+        int x = c.getXpos();
+        int y = c.getYpos() + 1;
+        int last = firstCardLocations[x];
+        int i = 0;
+        stack[i] = c;
+        while (y <= last) {
+            i++;
+            stack[i] = getCardAt(x, y);
+            y++;
+        }
+
+        return stack;
+    }
+
+    public void removeCards(Card[] cs) {
+        for (Card c : cs) {
+            panel.remove(cardPanelLocations[c.getXpos()][c.getYpos()]);
+        }
+        panel.revalidate();
+        panel.repaint();
+    }
+
+    public void moveCards(Card[] newStack, Card[] oldStack) {
+
+        Card firstOld = oldStack[oldStack.length - 1];
+        int x = firstOld.getXpos();
+        int y = firstOld.getYpos() + newStack.length;
+        gridConstraints.gridx = x;
+
+        firstCardLocations[x] = y;
+        firstCardLocations[oldStack[0].getXpos()] = oldStack[oldStack.length - 1].getYpos() - oldStack.length;
+        removeCards(oldStack);
+        removeCards(newStack);
+
+        for (int i = newStack.length - 1; i >= 0; i--) {
+            gridConstraints.gridy = y;
+            panel.add(newStack[i].getCardImg(), gridConstraints);
+            y--;
+        }
+        for (int j = oldStack.length - 1; j >= 0; j--) {
+            gridConstraints.gridy = y;
+            panel.add(oldStack[j].getCardImg(), gridConstraints);
+            y--;
+        }
+        panel.revalidate();
+        panel.repaint();
     }
 
     private class ListenForFirstMouse implements MouseListener {
@@ -172,6 +232,22 @@ public class Main {
             int val2 = secondCard.getValue();
             if (suit1.equals(suit2) && (val1 + 1) == val2) {
                 System.out.println("LEGAL");
+                // 1) find cards underneath firstCard
+                //Card[] cardStack = getCardStack(firstCard);
+                // 2) move stack over below secondCard
+                moveCards(getCardStack(firstCard), getCardStack(getCardAt(secondCard.getXpos(), 0)));
+//                int newSpotX = secondCard.getXpos();
+//                int newSpotY = secondCard.getYpos() + 1;
+//                panel.remove(cardPanelLocations[firstCard.getXpos()][firstCard.getYpos()]);
+//                firstCard.setXpos(newSpotX);
+//                firstCard.setYpos(newSpotY);
+//                cardPanelLocations[firstCard.getXpos()][firstCard.getYpos()] = firstCard.getCardImg();
+//                gridConstraints.gridx = firstCard.getXpos();
+//                gridConstraints.gridy = firstCard.getYpos();
+//                panel.add(cardPanelLocations[firstCard.getXpos()][firstCard.getYpos()], gridConstraints);
+//                frame.revalidate();
+//                frame.repaint();
+
             }
             else {
                 System.out.println("ILLEGAL");
