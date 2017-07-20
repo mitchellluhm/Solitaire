@@ -18,13 +18,17 @@ public class Main {
     private JPanel[][] cardPanelLocations;
     private ListenForFirstMouse lForMouse1;
     private ListenForSecondMouse lForMouse2;
+    private ListenForAceProgression lForAce;
     private int[] firstCardLocations;
     private Card firstCard, secondCard;
+    private JPanel[] aceProgression;
     //private Card[] secondMouseEnabledCards = new Card[7];
+    private Card[][] aceProgCards;
 
     public static void main(String[] args) {
         Main m = new Main();
         m.initFrame();
+        m.initAceProgression();
     }
 
     public void initFrame() {
@@ -57,6 +61,24 @@ public class Main {
         gridConstraints.anchor = GridBagConstraints.CENTER;
         gridConstraints.fill = GridBagConstraints.BOTH;
 
+    }
+
+    public void initAceProgression() {
+        aceProgCards = new Card[4][13];
+        gridConstraints.gridx = 8;
+        gridConstraints.gridy = 1;
+        aceProgression = new JPanel[4];
+        JLabel[] suits = {new JLabel("clubs"), new JLabel("spades"), new JLabel("hearts"), new JLabel("diamonds")};
+        for (int i = 0; i < 4; i++) {
+            aceProgression[i] = new JPanel();
+            aceProgression[i].add(suits[i]);
+            lForAce = new ListenForAceProgression();
+            aceProgression[i].addMouseListener(lForAce);
+            panel.add(aceProgression[i], gridConstraints);
+            gridConstraints.gridy += 3;
+        }
+        frame.revalidate();
+        frame.repaint();
     }
 
     public void dealCards() {
@@ -265,6 +287,49 @@ public class Main {
             }
             resetMouseListeners(cardPanelLocations);
 
+
+
+        }
+
+        @Override
+        public void mousePressed(MouseEvent mouseEvent) {
+
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent mouseEvent) {
+
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent mouseEvent) {
+
+        }
+
+        @Override
+        public void mouseExited(MouseEvent mouseEvent) {
+
+        }
+    }
+
+    private class ListenForAceProgression implements MouseListener {
+
+        @Override
+        public void mouseClicked(MouseEvent mouseEvent) {
+            System.out.println("3 MC");
+            if (firstCard.getValue() == 0 && aceProgCards[0][0] == null && firstCardLocations[firstCard.getXpos()] == firstCard.getYpos()) {
+                cardPanelLocations[firstCard.getXpos()][firstCard.getYpos()] = null;
+                firstCardLocations[firstCard.getXpos()] = firstCard.getYpos() - 1;
+                // should I udpate the x and y pos of done card ?
+                panel.remove(aceProgression[0]);
+                gridConstraints.gridx = 8;
+                gridConstraints.gridy = 1;
+                panel.add(firstCard.getCardImg(), gridConstraints);
+            }
+
+            resetMouseListeners(cardPanelLocations);
+            frame.revalidate();
+            frame.repaint();
 
 
         }
