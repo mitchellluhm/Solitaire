@@ -2,6 +2,8 @@
  * Created by mitchell on 7/15/17.
  */
 
+import com.sun.org.apache.xpath.internal.SourceTree;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -19,11 +21,12 @@ public class Main {
     private ListenForFirstMouse lForMouse1;
     private ListenForSecondMouse lForMouse2;
     private ListenForAceProgression lForAce;
+    private ListenForKing lForKing;
     private int[] firstCardLocations;
     private Card firstCard, secondCard;
     private JPanel[] aceProgression;
-    //private Card[] secondMouseEnabledCards = new Card[7];
-    private Card[][] aceProgCards;
+    private Card[] aceProgCards;
+    private int[] aceProgTop;
 
     public static void main(String[] args) {
         Main m = new Main();
@@ -64,7 +67,12 @@ public class Main {
     }
 
     public void initAceProgression() {
-        aceProgCards = new Card[4][13];
+        aceProgCards = new Card[4];
+        aceProgTop = new int[4];
+        aceProgTop[0] = -1;
+        aceProgTop[1] = -1;
+        aceProgTop[2] = -1;
+        aceProgTop[3] = -1;
         gridConstraints.gridx = 8;
         gridConstraints.gridy = 1;
         aceProgression = new JPanel[4];
@@ -194,17 +202,59 @@ public class Main {
         panel.repaint();
     }
 
-    public void resetMouseListeners(JPanel[][] cPanels) {
-        for (int i = 0; i < cPanels.length; i++) {
-            for (int j = 0; j < cPanels[0].length; j++) {
-                if (cPanels[i][j] != null) {
-                    MouseListener[] mListeners = cPanels[i][j].getMouseListeners();
+    public void moveCards(Card[] newStack, int loc) {
+        int x = loc;
+        int y = newStack.length - 1;
+        gridConstraints.gridx = x;
+
+        firstCardLocations[x] += newStack.length;
+        firstCardLocations[newStack[0].getXpos()] -= newStack.length;
+        removeCards(newStack);
+
+        for (int i = newStack.length - 1; i >= 0; i--) {
+            gridConstraints.gridy = y;
+            newStack[i].setXpos(x);
+            newStack[i].setYpos(y);
+            cardPanelLocations[x][y] = newStack[i].getCardImg();
+            panel.add(cardPanelLocations[x][y], gridConstraints);
+            y--;
+        }
+    }
+
+    public void resetMouseListeners() {
+        for (int i = 0; i < cardPanelLocations.length; i++) {
+            for (int j = 0; j < cardPanelLocations[0].length; j++) {
+                if (cardPanelLocations[i][j] != null) {
+                    MouseListener[] mListeners = cardPanelLocations[i][j].getMouseListeners();
                     for (int k = 0; k < mListeners.length; k++) {
-                        cPanels[i][j].removeMouseListener(mListeners[k]);
+                        cardPanelLocations[i][j].removeMouseListener(mListeners[k]);
                     }
-                    ListenForFirstMouse lForMouse1 = new ListenForFirstMouse();
-                    cPanels[i][j].addMouseListener(lForMouse1);
+                    if (firstCardLocations[i] >= 0) {
+                        ListenForFirstMouse lForMouse1 = new ListenForFirstMouse();
+                        cardPanelLocations[i][j].addMouseListener(lForMouse1);
+                    }
+                    else {
+                        ListenForKing lForKing = new ListenForKing();
+                        cardPanelLocations[i][j].addMouseListener(lForKing);
+                    }
                 }
+
+            }
+        }
+    }
+
+    public void checkEmptyColumns() {
+        for (int z = 0; z < firstCardLocations.length; z++) {
+            if (firstCardLocations[z] < 0) {
+                cardPanelLocations[z][0] = new JPanel();
+                gridConstraints.gridx = z;
+                gridConstraints.gridy = 0;
+                cardPanelLocations[z][0].add(new JLabel("EMPTY"));
+                lForKing = new ListenForKing();
+                cardPanelLocations[z][0].addMouseListener(lForKing);
+                panel.add(cardPanelLocations[z][0], gridConstraints);
+                frame.revalidate();
+                frame.repaint();
 
             }
         }
@@ -222,11 +272,27 @@ public class Main {
             }
             int i = 0;
             for (int n : firstCardLocations) {
-                if (cardPanelLocations[i][n].getMouseListeners().length > 0) {
-                    cardPanelLocations[i][n].removeMouseListener(cardPanelLocations[i][n].getMouseListeners()[0]);
+                // CARE WHEN OPEN SPOT IMPLEMENTED
+                if (n >= 0) {
+
+                    if (cardPanelLocations[i][n] != null && cardPanelLocations[i][n].getMouseListeners().length > 0) {
+                        for (MouseListener l : cardPanelLocations[i][n].getMouseListeners()) {
+                            cardPanelLocations[i][n].removeMouseListener(l);
+                        }
+                    }
+                    if (cardPanelLocations[i][n] != null) {
+                        lForMouse2 = new ListenForSecondMouse();
+                        cardPanelLocations[i][n].addMouseListener(lForMouse2);
+                    }
                 }
-                lForMouse2 = new ListenForSecondMouse();
-                cardPanelLocations[i][n].addMouseListener(lForMouse2);
+                /*else {
+                    System.out.println("i: " + i + " n: " + n);
+                    if (cardPanelLocations[i][0] != null) {
+                        ListenForKing lForKing = new ListenForKing();
+                        cardPanelLocations[i][0].addMouseListener(lForKing);
+                    }
+
+                }*/
                 i++;
             }
         }
@@ -243,8 +309,6 @@ public class Main {
 
         @Override
         public void mouseEntered(MouseEvent mouseEvent) {
-
-
 
         }
 
@@ -285,7 +349,10 @@ public class Main {
             else {
                 System.out.println("ILLEGAL");
             }
-            resetMouseListeners(cardPanelLocations);
+
+            resetMouseListeners();
+            checkEmptyColumns();
+
 
 
 
@@ -314,24 +381,133 @@ public class Main {
 
     private class ListenForAceProgression implements MouseListener {
 
+//        private JPanel[] aceProgression;
+//        private Card[][] aceProgCards;
+//        private int[] aceProgTop;
+
+        /*
+         * 1) check if firstCard is at the top
+         * 2) check if firstCard is ace (val = 0)
+         *   a) if ace: find first null spot in aceProgCards
+         *   b) place ace there
+         *   c) increment corresponding aceProgTop by 1
+         */
+
         @Override
         public void mouseClicked(MouseEvent mouseEvent) {
             System.out.println("3 MC");
-            if (firstCard.getValue() == 0 && aceProgCards[0][0] == null && firstCardLocations[firstCard.getXpos()] == firstCard.getYpos()) {
-                cardPanelLocations[firstCard.getXpos()][firstCard.getYpos()] = null;
-                firstCardLocations[firstCard.getXpos()] = firstCard.getYpos() - 1;
-                // should I udpate the x and y pos of done card ?
-                panel.remove(aceProgression[0]);
-                gridConstraints.gridx = 8;
-                gridConstraints.gridy = 1;
-                panel.add(firstCard.getCardImg(), gridConstraints);
+            // we have ace find null stack to start with it
+            if (firstCard.getValue() == 0 && firstCardLocations[firstCard.getXpos()] == firstCard.getYpos()) {
+                boolean found = false;
+                for (int i = 0; i < aceProgCards.length; i++) {
+                    if (aceProgCards[i] == null && found == false) {
+                        panel.remove(aceProgression[i]);
+                        aceProgCards[i] = firstCard;
+                        firstCardLocations[firstCard.getXpos()] -= 1;
+                        cardPanelLocations[firstCard.getXpos()][firstCard.getYpos()] = null;
+                        //aceProgression[i].remove(aceProgression[i])
+                        aceProgression[i] = firstCard.getCardImg();
+                        System.out.println(aceProgression[i].getMouseListeners().length);
+                        MouseListener[] aceMLS = aceProgression[i].getMouseListeners();
+                        for (int j = 0; j < aceMLS.length; j++) {
+                            aceProgression[i].removeMouseListener(aceMLS[j]);
+                        }
+                        lForAce = new ListenForAceProgression();
+                        aceProgression[i].addMouseListener(lForAce);
+                        aceProgTop[i]++;
+                        gridConstraints.gridx = 8;
+                        gridConstraints.gridy = (i) * 3;
+                        aceProgCards[i].setXpos(gridConstraints.gridx);
+                        aceProgCards[i].setYpos(gridConstraints.gridy);
+                        panel.add(aceProgression[i], gridConstraints);
+                        found = true;
+                    }
+                }
             }
 
-            resetMouseListeners(cardPanelLocations);
+            if (firstCard.getValue() > 0 && firstCardLocations[firstCard.getXpos()] == firstCard.getYpos()) {
+                // find stack
+                for (int i = 0; i < aceProgCards.length; i++) {
+                    if (aceProgCards[i] != null && aceProgCards[i].getType().equals(firstCard.getType()) && (firstCard.getValue() - 1) == aceProgCards[i].getValue()) {
+                        panel.remove(cardPanelLocations[firstCard.getXpos()][firstCard.getYpos()]);
+                        cardPanelLocations[firstCard.getXpos()][firstCard.getYpos()] = null;
+                        firstCardLocations[firstCard.getXpos()] -= 1;
+                        panel.remove(aceProgression[i]);
+                        gridConstraints.gridx = aceProgCards[i].getXpos();
+                        gridConstraints.gridy = aceProgCards[i].getYpos();
+                        aceProgCards[i] = firstCard;
+                        aceProgCards[i].setXpos(gridConstraints.gridx);
+                        aceProgCards[i].setYpos(gridConstraints.gridy);
+                        aceProgression[i] = aceProgCards[i].getCardImg();
+                        lForAce = new ListenForAceProgression();
+                        aceProgression[i].addMouseListener(lForAce);
+                        panel.add(aceProgression[i], gridConstraints);
+                        frame.revalidate();
+                        frame.repaint();
+
+                    }
+                }
+            }
+//            if (firstCard.getValue() == 0 && aceProgCards[0] == null && firstCardLocations[firstCard.getXpos()] == firstCard.getYpos()) {
+//                cardPanelLocations[firstCard.getXpos()][firstCard.getYpos()] = null;
+//                firstCardLocations[firstCard.getXpos()] = firstCard.getYpos() - 1;
+//                // should I udpate the x and y pos of done card ?
+//                panel.remove(aceProgression[0]);
+//                gridConstraints.gridx = 8;
+//                gridConstraints.gridy = 1;
+//                panel.add(firstCard.getCardImg(), gridConstraints);
+//            }
+
+
+            resetMouseListeners();
+            checkEmptyColumns();
+
             frame.revalidate();
             frame.repaint();
 
 
+        }
+
+        @Override
+        public void mousePressed(MouseEvent mouseEvent) {
+
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent mouseEvent) {
+
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent mouseEvent) {
+
+        }
+
+        @Override
+        public void mouseExited(MouseEvent mouseEvent) {
+
+        }
+    }
+
+    private class ListenForKing implements MouseListener {
+
+        @Override
+        public void mouseClicked(MouseEvent mouseEvent) {
+
+            System.out.println("king spot clicked");
+            if (firstCard.getValue() == 12) {
+                //moveCards(getCardStack(firstCard), mouseEvent.getX())
+                for (int i = 0; i < cardPanelLocations.length; i++) {
+                    for (int j = 0; j < cardPanelLocations[0].length; j++) {
+                        if (cardPanelLocations[i][j] != null && cardPanelLocations[i][j] == (JPanel)mouseEvent.getSource()) {
+                            System.out.println("GOT HERE");
+                            panel.remove(cardPanelLocations[i][j]);
+                            cardPanelLocations[i][j] = null;
+                            moveCards(getCardStack(firstCard), i);
+                        }
+                    }
+                }
+            }
         }
 
         @Override
