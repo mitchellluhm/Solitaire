@@ -89,6 +89,18 @@ public class Main {
         frame.repaint();
     }
 
+    public boolean placeBack(int x, int y) {
+        if (x == 0) {
+            return false;
+        }
+        else if (y + 1 > x) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+
     public void dealCards() {
         // initialize the deck
         d = new Deck();
@@ -112,11 +124,19 @@ public class Main {
         // layout cards in the standard Russian Solitaire format
         int top = 10;
         for (Card card : cards) {
+            //System.out.println(card.getFullTitle() + " x pos being set to " + gridConstraints.gridx);
             card.setXpos(gridConstraints.gridx);
             card.setYpos(gridConstraints.gridy);
             cardPanelLocations[gridConstraints.gridx][gridConstraints.gridy] = card.getCardImg();
             initMouse(cardPanelLocations[gridConstraints.gridx][gridConstraints.gridy]);
-            panel.add(cardPanelLocations[gridConstraints.gridx][gridConstraints.gridy], gridConstraints);
+            /* back side control starts here */
+            if (placeBack(gridConstraints.gridx, gridConstraints.gridy)) {
+                panel.add(card.getBackSideImg(), gridConstraints);
+            }
+            else {
+                panel.add(cardPanelLocations[gridConstraints.gridx][gridConstraints.gridy], gridConstraints);
+            }
+            /* ends here */
 
             if (gridConstraints.gridy == 0) {
                 if (gridConstraints.gridx == 1) {
@@ -186,6 +206,7 @@ public class Main {
 
         for (int i = newStack.length - 1; i >= 0; i--) {
             gridConstraints.gridy = y;
+            System.out.println(newStack[i].getFullTitle() + " x being set to " + x);
             newStack[i].setXpos(x);
             newStack[i].setYpos(y);
             cardPanelLocations[x][y] = newStack[i].getCardImg();
@@ -402,6 +423,7 @@ public class Main {
                 for (int i = 0; i < aceProgCards.length; i++) {
                     if (aceProgCards[i] == null && found == false) {
                         panel.remove(aceProgression[i]);
+                        panel.remove(cardPanelLocations[firstCard.getXpos()][firstCard.getYpos()]);
                         aceProgCards[i] = firstCard;
                         firstCardLocations[firstCard.getXpos()] -= 1;
                         cardPanelLocations[firstCard.getXpos()][firstCard.getYpos()] = null;
@@ -417,6 +439,7 @@ public class Main {
                         aceProgTop[i]++;
                         gridConstraints.gridx = 8;
                         gridConstraints.gridy = (i) * 3;
+                        System.out.println(aceProgCards[i].getFullTitle() + " about to be set...");
                         aceProgCards[i].setXpos(gridConstraints.gridx);
                         aceProgCards[i].setYpos(gridConstraints.gridy);
                         panel.add(aceProgression[i], gridConstraints);
@@ -424,7 +447,7 @@ public class Main {
                     }
                 }
             }
-
+            System.out.println(firstCard.getXpos());
             if (firstCard.getValue() > 0 && firstCardLocations[firstCard.getXpos()] == firstCard.getYpos()) {
                 // find stack
                 for (int i = 0; i < aceProgCards.length; i++) {
@@ -436,9 +459,13 @@ public class Main {
                         gridConstraints.gridx = aceProgCards[i].getXpos();
                         gridConstraints.gridy = aceProgCards[i].getYpos();
                         aceProgCards[i] = firstCard;
+                        System.out.println(aceProgCards[i].getFullTitle() + " 2 about to be set");
                         aceProgCards[i].setXpos(gridConstraints.gridx);
                         aceProgCards[i].setYpos(gridConstraints.gridy);
                         aceProgression[i] = aceProgCards[i].getCardImg();
+                        for (MouseListener ml : aceProgression[i].getMouseListeners()) {
+                            aceProgression[i].removeMouseListener(ml);
+                        }
                         lForAce = new ListenForAceProgression();
                         aceProgression[i].addMouseListener(lForAce);
                         panel.add(aceProgression[i], gridConstraints);
@@ -495,6 +522,7 @@ public class Main {
         public void mouseClicked(MouseEvent mouseEvent) {
 
             System.out.println("king spot clicked");
+            System.out.println("val: " + firstCard.getValue());
             if (firstCard.getValue() == 12) {
                 //moveCards(getCardStack(firstCard), mouseEvent.getX())
                 for (int i = 0; i < cardPanelLocations.length; i++) {

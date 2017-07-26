@@ -8,7 +8,7 @@ public class Card {
     private int value;
     private String type, fullTitle;
     private int xpos, ypos;
-    private JPanel cardImg;
+    private JPanel cardImg, backSide;
 
     public Card(String s) {
         String temp_s = s.substring(0, s.length() - 4); // remove .png extension
@@ -23,6 +23,7 @@ public class Card {
         ShowPNG img = new ShowPNG();
         //System.out.println(s);
         this.setCardImg(img.getCard(s));
+        this.setBackSideImg(img.getCard("back.png"));
     }
 
 
@@ -87,6 +88,14 @@ public class Card {
 
     public JPanel getCardImg() {
         return cardImg;
+    }
+
+    public JPanel getBackSideImg() {
+        return backSide;
+    }
+
+    public void setBackSideImg(JPanel back) {
+        this.backSide = back;
     }
 
     public void setCardImg(JPanel cardImg) {
